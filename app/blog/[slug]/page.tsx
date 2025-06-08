@@ -12,7 +12,7 @@ async function getBlogPost(slug: string) {
   // Get site settings to determine primary user
   const siteSettings = await getSiteSettings()
 
-  let userFilter = { slug, published: true }
+  let userFilter: Record<string, unknown> = { slug, published: true }
   if (siteSettings?.single_user_mode && siteSettings.primary_user_id) {
     userFilter = { ...userFilter, user_id: siteSettings.primary_user_id }
   }

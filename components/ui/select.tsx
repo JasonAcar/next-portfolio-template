@@ -1,4 +1,6 @@
+/// <reference types="@radix-ui/react-select" />
 import * as React from "react"
+
 import {
   Select as RadixSelect,
   SelectContent as RadixSelectContent,
