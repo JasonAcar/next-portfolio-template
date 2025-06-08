@@ -1,0 +1,44 @@
+.idea
+**/.env
+**/.env.*
+**/.idea
+
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Vercel/Netlify output (if applicable)
+.vercel/
+.netlify/
+
+# Environment variables
+.env
+.env.*
+!.env.example  # (keep a sample config in repo)
+
+# IDE/editor junk
+.idea/
+.vscode/
+*.swp
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# ShadCN CLI files (if you're not using the CLI anymore)
+.shadcn.json
+components.json
+
+# Optional: lock file for a different package manager you're not using
+# Example: if you're using `npm`, ignore yarn.lock and pnpm-lock.yaml
+yarn.lock
+pnpm-lock.yaml
