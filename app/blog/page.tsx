@@ -6,12 +6,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Calendar } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { getSiteSettings } from "@/lib/auth-utils"
 
 async function getBlogPosts() {
+  // Get site settings to determine primary user
+  const siteSettings = await getSiteSettings()
+
+  let userFilter = { published: true }
+  if (siteSettings?.single_user_mode && siteSettings.primary_user_id) {
+    userFilter = { ...userFilter, user_id: siteSettings.primary_user_id }
+  }
+
   const { data } = await supabase
     .from("blog_posts")
     .select("*")
-    .eq("published", true)
+    .match(userFilter)
     .order("created_at", { ascending: false })
 
   return data as BlogPost[]

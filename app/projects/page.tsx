@@ -6,9 +6,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Github, ExternalLink, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { getSiteSettings } from "@/lib/auth-utils"
 
 async function getProjects() {
-  const { data } = await supabase.from("projects").select("*").order("created_at", { ascending: false })
+  // Get site settings to determine primary user
+  const siteSettings = await getSiteSettings()
+
+  let userFilter = {}
+  if (siteSettings?.single_user_mode && siteSettings.primary_user_id) {
+    userFilter = { user_id: siteSettings.primary_user_id }
+  }
+
+  const { data } = await supabase
+    .from("projects")
+    .select("*")
+    .match(userFilter)
+    .order("created_at", { ascending: false })
 
   return data as Project[]
 }

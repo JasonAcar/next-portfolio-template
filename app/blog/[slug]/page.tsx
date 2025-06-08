@@ -1,18 +1,23 @@
-// @ts-ignore
 import { supabase } from "@/lib/supabase"
-// @ts-ignore
 import type { BlogPost } from "@/lib/types"
-// @ts-ignore
 import { Badge } from "@/components/ui/badge"
-// @ts-ignore
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Calendar } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
+import { getSiteSettings } from "@/lib/auth-utils"
 
 async function getBlogPost(slug: string) {
-  const { data } = await supabase.from("blog_posts").select("*").eq("slug", slug).eq("published", true).single()
+  // Get site settings to determine primary user
+  const siteSettings = await getSiteSettings()
+
+  let userFilter = { slug, published: true }
+  if (siteSettings?.single_user_mode && siteSettings.primary_user_id) {
+    userFilter = { ...userFilter, user_id: siteSettings.primary_user_id }
+  }
+
+  const { data } = await supabase.from("blog_posts").select("*").match(userFilter).single()
 
   return data as BlogPost
 }

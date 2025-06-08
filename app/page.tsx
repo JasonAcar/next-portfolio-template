@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase"
+import { getSiteSettings } from "@/lib/auth-utils"
 import type { Profile, Project, BlogPost, Technology, Experience } from "@/lib/types"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -9,12 +10,25 @@ import Link from "next/link"
 import Image from "next/image"
 
 async function getPortfolioData() {
+  // Get site settings to determine primary user
+  const siteSettings = await getSiteSettings()
+
+  let userFilter = {}
+  if (siteSettings?.single_user_mode && siteSettings.primary_user_id) {
+    userFilter = { user_id: siteSettings.primary_user_id }
+  }
+
   const [profileRes, projectsRes, blogPostsRes, technologiesRes, experiencesRes] = await Promise.all([
-    supabase.from("profiles").select("*").limit(1).single(),
-    supabase.from("projects").select("*").order("created_at", { ascending: false }),
-    supabase.from("blog_posts").select("*").eq("published", true).order("created_at", { ascending: false }).limit(3),
-    supabase.from("technologies").select("*").order("proficiency", { ascending: false }),
-    supabase.from("experiences").select("*").order("start_date", { ascending: false }),
+    supabase.from("profiles").select("*").match(userFilter).limit(1).single(),
+    supabase.from("projects").select("*").match(userFilter).order("created_at", { ascending: false }),
+    supabase
+      .from("blog_posts")
+      .select("*")
+      .match({ ...userFilter, published: true })
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase.from("technologies").select("*").match(userFilter).order("proficiency", { ascending: false }),
+    supabase.from("experiences").select("*").match(userFilter).order("start_date", { ascending: false }),
   ])
 
   return {
@@ -23,11 +37,38 @@ async function getPortfolioData() {
     blogPosts: blogPostsRes.data as BlogPost[],
     technologies: technologiesRes.data as Technology[],
     experiences: experiencesRes.data as Experience[],
+    siteSettings,
   }
 }
 
 export default async function Portfolio() {
-  const { profile, projects, blogPosts, technologies, experiences } = await getPortfolioData()
+  const { profile, projects, blogPosts, technologies, experiences, siteSettings } = await getPortfolioData()
+
+  // If no profile exists and we're in single-user mode, show setup message
+  if (!profile && siteSettings?.single_user_mode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center p-8">
+          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-2xl bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                Welcome to Your Portfolio
+              </CardTitle>
+              <CardDescription>Get started by setting up your admin account and creating your profile.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                asChild
+              >
+                <Link href="/admin">Get Started</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   const featuredProjects = projects?.filter((p) => p.featured) || []
   const techByCategory =
